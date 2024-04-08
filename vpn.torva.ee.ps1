@@ -1,26 +1,27 @@
 param (
-    [string]$destinationPrefix = "172.28.3.0/24" # Default value if not provided
+    [string]$destinationPrefix = "172.28.3.0/24", # Default value if not provided
+    [string]$connectionName = "vpn.torva.ee"
 )
 
 if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Start-Process PowerShell -ArgumentList "-ExecutionPolicy Bypass", "-File `"$PSCommandPath`"" -Verb RunAs
+    Start-Process PowerShell -ArgumentList "-ExecutionPolicy Bypass", "-File `"$PSCommandPath`"", "-destinationPrefix", $destinationPrefix, "-connectionName", $connectionName -Verb RunAs
     exit
 }
 
 Write-Host "Running with elevated privileges"
 
-$vpnName = "vpn.torva.ee"
+$serverAddress = "vpn.torva.ee"
 
 # Check if the VPN connection already exists
 try {
-    $existingVpn = Get-VpnConnection -Name $vpnName -ErrorAction Stop
-    Write-Output "VPN connection '$vpnName' already exists. Removing..."
+    $existingVpn = Get-VpnConnection -Name $serverAddress -ErrorAction Stop
+    Write-Output "VPN connection '$serverAddress' already exists. Removing..."
     
     # Remove the existing VPN connection
-    Remove-VpnConnection -Name $vpnName -Force
-    Write-Output "Existing VPN connection '$vpnName' removed."
+    Remove-VpnConnection -Name $serverAddress -Force
+    Write-Output "Existing VPN connection '$serverAddress' removed."
 } catch {
-    Write-Output "VPN connection '$vpnName' does not exist. Proceeding to create a new one."
+    Write-Output "VPN connection '$serverAddress' does not exist. Proceeding to create a new one."
 }
 
 # Adjusted Root Certificate (base64 encoded with PEM header and footer)
@@ -54,25 +55,45 @@ $certBase64 = $certText -replace '^-+BEGIN CERTIFICATE-+[\r\n]+' -replace '[\r\n
 # Decode the base64 certificate content to byte array
 $certBytes = [Convert]::FromBase64String($certBase64)
 
-# Create a new X509 certificate object from the byte array
-$x509 = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
-$x509.Import($certBytes)
+# Check if $certBytes is not $null and has elements
+if ($null -ne $certBytes -and $certBytes.Count -gt 0) {
 
-# Open the Root store of the LocalMachine
-$store = New-Object System.Security.Cryptography.X509Certificates.X509Store "Root", "LocalMachine"
-$store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+    # Generate a temporary file path in the system's designated temporary directory
+    $certFilePath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName() + ".crt")
+    
+    # Write to a temporary file for external validation
+    [System.IO.File]::WriteAllBytes($certFilePath, $certBytes)
+    
+    # Inform the user about the certificate file path for manual verification
+    Write-Host "Certificate saved to temporary file: $certFilePath"
+    Write-Host "Attempting to verify the certificate using OpenSSL..."
 
-# Add the certificate to the store
-$store.Add($x509)
+    # If the certificate is validated successfully, proceed to create the X509Certificate2 object
+    try {
+        $certObj = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2($certFilePath)
+        # Open the Root store of the LocalMachine
+        $store = New-Object System.Security.Cryptography.X509Certificates.X509Store "Root", "LocalMachine"
+        $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
 
-# Close the store
-$store.Close()
+        # Add the certificate to the store
+        $store.Add($certObj)
+
+        # Close the store
+        $store.Close()
+    }
+    catch {
+        Write-Host "Failed to load certificate: $_"
+    }
+}
+else {
+    Write-Host "`$certBytes is either null or empty."
+}
 
 # Create SSTP VPN Connection
-Add-VpnConnection -Name $vpnName -ServerAddress $vpnName -TunnelType 'Sstp' -EncryptionLevel 'Required' -AuthenticationMethod MSChapv2 -SplitTunneling -RememberCredential 
+Add-VpnConnection -Name $connectionName -ServerAddress $serverAddress -TunnelType 'Sstp' -EncryptionLevel 'Required' -AuthenticationMethod MSChapv2 -SplitTunneling -RememberCredential 
 
 # Add Route to VPN Connection
-Add-VpnConnectionRoute -ConnectionName $vpnName -DestinationPrefix $destinationPrefix
+Add-VpnConnectionRoute -ConnectionName $serverAddress -DestinationPrefix $destinationPrefix
 
 # Path to the rasphone.pbk file
 $pbkPath = "$env:USERPROFILE\AppData\Roaming\Microsoft\Network\Connections\Pbk\rasphone.pbk"
@@ -81,7 +102,7 @@ $pbkPath = "$env:USERPROFILE\AppData\Roaming\Microsoft\Network\Connections\Pbk\r
 $pbkContent = Get-Content -Path $pbkPath
 
 # Find the index of the VPN connection
-$vpnIndex = $pbkContent.IndexOf("[${vpnName}]")
+$vpnIndex = $pbkContent.IndexOf("[${serverAddress}]")
 
 if ($vpnIndex -ne -1) {
     # Initialize nextVpnIndex to just beyond the end of the file as a default
@@ -99,7 +120,7 @@ if ($vpnIndex -ne -1) {
     for ($i = $vpnIndex; $i -lt $nextVpnIndex; $i++) {
         if ($pbkContent[$i] -match "DisableClassBasedDefaultRoute=0") {
             $pbkContent[$i] = "DisableClassBasedDefaultRoute=1"
-            Write-Host "Disabled class-based default route for $vpnName."
+            Write-Host "Disabled class-based default route for $serverAddress."
             break
         }
     }
@@ -107,5 +128,6 @@ if ($vpnIndex -ne -1) {
     # Write the changes back to the PBK file
     $pbkContent | Set-Content -Path $pbkPath
 } else {
-    Write-Host "VPN connection '$vpnName' not found in PBK file."
+    Write-Host "VPN connection '$serverAddress' not found in PBK file."
 }
+
