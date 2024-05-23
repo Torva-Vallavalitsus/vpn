@@ -6,7 +6,7 @@ See skript automatiseerib Tõrva Vallavalitsusega seotud võrgu VPN-profiili sea
 1. **SSL Sertifikaadi lisamine:** Lisab Tõrva Vallavalitsuse VPN-serveri (vpn.torva.ee) SSL sertifikaadi Windowsi usaldatavate juursertifikaatide hoidlasse, et Windows oleks nõus ühendust selle serveriga looma.
 2. **VPN Profiili loomine:** Loob uue VPN-profiili kasutaja määratud nimega.
 3. **Marsruudi seadistamine:** Seadistab VPN-profiilile kasutaja määratud marsruudi, mille abil suunatakse VPN ühenduse loomisel sellesse võrguvahemikku adresseeritud liiklus ümber VPN-tunnelisse.
-4. **Vaikelüüsina kasutamise keelamine:** Keelab VPN profiilil "Use default gateway on remote network" funktsiooni, et Windowsi ei üritaks saata kogu internetiliiklust läbi Tõrva VPN serveri.
+4. **Vaikelüüsina kasutamise keelamine:** Keelab VPN profiilil "Use default gateway on remote network" funktsiooni, et Windows ei üritaks saata kogu internetiliiklust läbi Tõrva VPN serveri.
 
 ## Kasutusjuhend
 
