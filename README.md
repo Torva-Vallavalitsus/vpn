@@ -1,6 +1,6 @@
 # VPN-ühenduse seadistamine
 
-See skript aitab automatiseerida Windowsisse Tõrva Vallavalitsusega seotud asutuste VPN ühenduse loomist. Skript on loodud eelkõige automaatikasüsteemide spetsialistide jaoks, kes vajavad juurdepääsu sisevõrgus paiknevatele seadmetele. Skript on avalikult kättesaadav ega sisalda konfidentsiaalset teavet, lihtsalt automatiseerib samme.
+See skript aitab automatiseerida Windowsisse Tõrva Vallavalitsusega seotud võrkudesse VPN ühenduse loomist. Skript on loodud eelkõige automaatikasüsteemide spetsialistide jaoks, kes vajavad juurdepääsu sisevõrgus paiknevatele seadmetele. Skript on avalikult kättesaadav ega sisalda konfidentsiaalset teavet, lihtsalt automatiseerib samme.
 
 ## Skripti Funktsionaalsus
 1. **SSL Sertifikaadi lisamine:** Lisab Tõrva Vallavalitsuse VPN-serveri (vpn.torva.ee) SSL sertifikaadi Windowsi usaldatavate juursertifikaatide hoidlasse, et Windows oleks nõus ühendust selle serveriga looma.
