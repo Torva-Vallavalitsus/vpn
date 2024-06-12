@@ -25,7 +25,7 @@ This PowerShell script automates the setup of a VPN connection for Tõrva Vallav
     - `PREFERRED_CONNECTION_NAME` is the name you want to give to the VPN connection.
     - `IP_ADDRESS_NETWORK/SUBNET_SIZE` is the IP address range of the internal network you want to access.
    
-      For example:
+      For example (dummy values):
       ```powershell
         PowerShell -ExecutionPolicy Bypass -File .\vpn.torva.ee.ps1 -connectionName "Torva VPN" -destinationPrefix "192.168.2.0/24"
       ```
