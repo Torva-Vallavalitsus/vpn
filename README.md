@@ -1,26 +1,38 @@
-# VPN-ühenduse seadistamine
+# Tõrva Vallavalitsus VPN Setup Script
 
-See skript automatiseerib Tõrva Vallavalitsusega seotud võrgu VPN-profiili seadistamist Windowsis. Skript on loodud eelkõige automaatikasüsteemide spetsialistide jaoks, kes vajavad juurdepääsu sisevõrgus paiknevatele seadmetele. Skript on avalikult kättesaadav ega sisalda konfidentsiaalset teavet, lihtsalt automatiseerib samme.
+This PowerShell script automates the setup of a VPN connection for Tõrva Vallavalitsus. It is intended for use by automation system specialists who need access to devices on the internal network.
 
-## Skripti Funktsionaalsus
-1. **SSL Sertifikaadi lisamine:** Lisab Tõrva Vallavalitsuse VPN-serveri (vpn.torva.ee) SSL sertifikaadi Windowsi usaldatavate juursertifikaatide hoidlasse, et Windows oleks nõus ühendust selle serveriga looma.
-2. **VPN Profiili loomine:** Loob uue VPN-profiili kasutaja määratud nimega.
-3. **Marsruudi seadistamine:** Seadistab VPN-profiilile kasutaja määratud marsruudi, mille abil suunatakse VPN ühenduse loomisel sellesse võrguvahemikku adresseeritud liiklus ümber VPN-tunnelisse.
-4. **Vaikelüüsina kasutamise keelamine:** Keelab VPN profiilil "Use default gateway on remote network" funktsiooni, et Windows ei üritaks saata kogu internetiliiklust läbi Tõrva VPN serveri.
+## Prerequisites
 
-## Kasutusjuhend
+- Windows operating system
+- PowerShell 5.1 or later
+- Administrative privileges
 
-**Käivita käsk Windowsi Powershellis:**
+## Quick Start
 
-```powershell
-iwr -useb https://raw.githubusercontent.com/Torva-Vallavalitsus/vpn/main/vpn.torva.ee.ps1 | iex -connectionName "ÜHENDUSE_NIMI" -destinationPrefix "SISEVÕRGU_PREFIKS"
-```
+1. **Download the Script**: First, download the VPN setup script from the GitHub repository to your local machine.
 
-- **ÜHENDUSE_NIMI:** Asenda see soovitud VPN-ühenduse nimega. Näiteks "Tõrva tänavavalgustus" vms.
-- **SISEVÕRGU_PREFIKS:** Asenda see sisevõrgu prefiksiga, millele soovid juurdepääsu (näiteks 192.168.2.0/24).
+   ```powershell
+   Invoke-WebRequest -Uri https://raw.githubusercontent.com/Torva-Vallavalitsus/vpn/main/vpn.torva.ee.ps1 -OutFile "vpn.torva.ee.ps1"
+   ```
 
-**Edasised sammud:**
+2. **Run the Script**: Due to default PowerShell execution policies, you might encounter restrictions when trying to run scripts. To bypass these restrictions for this session only and avoid modifying system-wide policies, use the following command:
 
-1. Kontrolli, kas Windowsis on loodud uus VPN-ühendus määratud nimega.
-2. Ühendu VPN-iga ja sisesta oma kasutajatunnus ja parool, mis sulle antud on Tõrva Vallavalitsuse IT poolt.
-3. Testi, kas saad ühenduse soovitud automaatikaseadmega.
+   ```powershell
+   PowerShell -ExecutionPolicy Bypass -File .\vpn.torva.ee.ps1 -connectionName "PREFERRED_CONNECTION_NAME" -destinationPrefix "IP_ADDRESS_NETWORK/SUBNET_SIZE"
+   ```
+   where PREFERRED_CONNECTION_NAME is the desired name for the VPN connection in Windows that helps you to remember the purpose of the connection, IP_ADDRESS_NETWORK is the network address of the IP range that your automation devices are located and SUBNET_SIZE is the size of the IP network. Example: `192.168.2.0/24' would redirect all packets from your computer destined to any address in the range 192.168.2.1 - 192.168.2.255 to this VPN connection.
+
+## Script Functions
+
+- **SSL Certificate Installation**: Automatically installs the necessary SSL certificate to your system.
+- **VPN Profile Creation**: Creates a new VPN profile named as specified.
+- **Routing Configuration**: Sets up routing to direct only necessary traffic through the VPN.
+- **Default Gateway Modification**: Disables using the VPN as the default gateway to ensure only internal traffic is directed through the VPN.
+
+## Notes
+
+- Running scripts from the Internet can be dangerous. Always ensure that you trust the source of the scripts you execute.
+- If your organization's policies do not allow you to change execution policies, please contact your IT department for assistance.
+
+For further details on the script's functionality or if you encounter any issues, please review the code or contact support.
